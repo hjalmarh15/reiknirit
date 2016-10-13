@@ -1,8 +1,9 @@
 package s4;
 
-import d4.BreadthFirstPaths;
+import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.BreadthFirstDirectedPaths;
 import edu.princeton.cs.algs4.Digraph;
+import edu.princeton.cs.algs4.DirectedCycle;
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.Queue;
 import edu.princeton.cs.algs4.StdOut;
@@ -13,12 +14,38 @@ public class SAP {
 	
 	//constructor takes a digraph(not necessarily a DAG)
 	public SAP(Digraph G) {
+		checkIfAcyclic(G);
+		checkIfRooted(G);
 		graph = G;
 	}
 	
+	
+	//checks if the digraph is a DAG
+	public void checkIfAcyclic(Digraph G) {
+		DirectedCycle cycle = new DirectedCycle(G);
+		if (cycle.hasCycle()) {
+			throw new IllegalArgumentException("Graph is not acyclic");
+		}
+	}
+	
+	//check if the digraph is rooted
+	public void checkIfRooted(Digraph G) {
+		Bag<Integer> roots = new Bag<Integer>();
+		for(int v = 0; v < G.V(); v++) {
+			if(G.outdegree(v) == 0) {
+				roots.add(v);
+			}
+		}
+		if(roots.size() != 1) {
+			throw new IllegalArgumentException("Graph is not rooted");
+		}
+	}
 	// length of the shortest ancestral path between v and w; -1 if no such path
-	public int length(int v, int w) {
+	public int length(int v, int w) throws IndexOutOfBoundsException {
 		//TODO: check range
+		if(v < 0 || w < 0 || v >= graph.V() || w >= graph.V()) {
+			throw new IndexOutOfBoundsException();
+		}
 		
 		BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(graph, v);
 		BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(graph, w);
@@ -33,7 +60,9 @@ public class SAP {
 	
 	// a shortest common common ancestor of v and w; -1 if no such path
 	public int ancestor(int v, int w) {
-		//TODO:check range
+		if(v < 0 || w < 0 || v >= graph.V() || w >= graph.V()) {
+			throw new IndexOutOfBoundsException();
+		}
 		BreadthFirstDirectedPaths bfsV = new BreadthFirstDirectedPaths(graph, v);
 		BreadthFirstDirectedPaths bfsW = new BreadthFirstDirectedPaths(graph, w);
 		int ancestor = -1;
@@ -46,7 +75,7 @@ public class SAP {
 		}
 		
 		for(Integer i : ancestors) {
-			if((bfsV.distTo(i) + bfsW.distTo(i)) < shortestPath) {
+			if((bfsV.distTo(i) + bfsW.distTo(i)) <= shortestPath) {
 				shortestPath = (bfsV.distTo(i) + bfsW.distTo(i));
 				ancestor = i;
 			}
@@ -56,8 +85,7 @@ public class SAP {
 	
 	// length of shortest ancestral path of vertex subsets A and B; -1 if no such path
 	public int length(Iterable <Integer > A, Iterable <Integer > B) {
-		//todo check if valid
-		
+
 		BreadthFirstDirectedPaths bfsA = new BreadthFirstDirectedPaths(graph, A);
 		BreadthFirstDirectedPaths bfsB = new BreadthFirstDirectedPaths(graph, B);
 		int ancestor = ancestor(A, B);
@@ -87,7 +115,7 @@ public class SAP {
 		}
 		
 		for(Integer i : ancestors ) {
-			if((bfsA.distTo(i) + bfsB.distTo(i)) < shortestPath) {
+			if((bfsA.distTo(i) + bfsB.distTo(i)) <= shortestPath) {
 				shortestPath = 	bfsA.distTo(i) + bfsB.distTo(i);
 				ancestor = i;
 			}
@@ -99,22 +127,19 @@ public class SAP {
 	public static void main(String[] args) {
 		//new In stream
     	In in = new In();
-    	
-    	//new Digraph takes in In stream
     	Digraph graph = new Digraph(in);
     	
-    	//number of test cases
-    	int s = in.readInt();
-    	for(int i = 0; i < s; i++) {
-    		//first number of the set
-	    	int v = in.readInt();
-	    	//second number of the set
-	    	int w = in.readInt();
-	    	BreadthFirstPaths bfs = new BreadthFirstPaths(graph, v);
-	    	
-	    	//print number of shortest paths
-	    	StdOut.println(bfs.nrOfPathsTo(w));
-    	}
+    	SAP sap = new SAP(graph);
     	
+    	//number of tests
+    	int N = in.readInt();
+    	
+    	//test for length of one v and one w
+    	for(int i = 0; i < N; i++) {
+    		int v = in.readInt();
+    		int w = in.readInt();
+    		StdOut.println("Length: " + sap.length(v, w) + ", ancestor: " + sap.ancestor(v, w));
+    	}
+    	 	
 	}
 }
